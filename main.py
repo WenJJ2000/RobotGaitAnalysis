@@ -13,25 +13,32 @@ motor_pins = []
 raspi_cam = RaspberryCam(VIDEO_SOURCE)
 
 
-tracking_inference = FrameInference(raspi_cam)
+# tracking_inference = FrameInference(raspi_cam)
 
 
-pose = PoseInference(raspi_cam)
+# pose = PoseInference(raspi_cam)
+
 
 
 while True:
     try:
     # if pose_inference
-        frame,results = pose.pose_inference()
-        if frame is not None and results is not None:
+        # frame,results = pose.pose_inference()
+        # if frame is not None and results is not None:
             
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            annotated_image =draw_landmarks_on_image(rgb_frame,results)
+        #     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #     annotated_image =draw_landmarks_on_image(rgb_frame,results)
             
-            if annotated_image is not None:
+        #     if annotated_image is not None:
             
-                cv2.imshow("pose frame",annotated_image)
+        #         cv2.imshow("pose frame",annotated_image)
         
+        
+        # Testing camera
+        res, frame = raspi_cam.read()
+        if res:
+            cv2.imshow("camera frame", frame)
+            
         if cv2.waitKey() & 0xFF == ord("q"):
             break
         

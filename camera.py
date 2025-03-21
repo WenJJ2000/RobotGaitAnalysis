@@ -22,4 +22,5 @@ class RaspberryCam:
                 self.res, self.frame = self.capture.read()
     
     def read(self):
+        print(self.frame)
         return self.res, self.frame	
