@@ -1,0 +1,3 @@
+[submodule "servo_test"]
+	path = servo_test
+	url = https://github.com/ArduCAM/PCA9685.git

@@ -1,0 +1,9 @@
+wget https://ports.ubuntu.com/pool/universe/g/geographiclib/libgeographic-dev_1.49-2_arm64.deb
+wget https://ports.ubuntu.com/pool/universe/g/geographiclib/libgeographic17_1.49-2_arm64.deb
+wget https://us.ports.ubuntu.com/pool/universe/o/orocos-kdl/liborocos-kdl1.4_1.4.0-7build2_arm64.deb
+wget http://ftp.de.debian.org/debian/pool/main/o/ogre-1.9/libogre-1.9.0v5_1.9.0+dfsg1-12.1_arm64.deb
+wget http://ftp.de.debian.org/debian/pool/main/o/ogre-1.9/libogre-1.9-dev_1.9.0+dfsg1-12.1_arm64.deb
+wget http://ftp.de.debian.org/debian/pool/main/l/log4cxx/liblog4cxx11_0.11.0-2_arm64.deb
+wget wget http://ftp.de.debian.org/debian/pool/main/l/log4cxx/liblog4cxx-dev_0.11.0-2_arm64.deb
+
+sudo apt install -y ./libgeographic17_1.49-2_arm64.deb ./libgeographic-dev_1.49-2_arm64.deb ./liborocos-kdl1.4_1.4.0-7build2_arm64.deb ./libogre-1.9.0v5_1.9.0+dfsg1-12.1_arm64.deb ./libogre-1.9-dev_1.9.0+dfsg1-12.1_arm64.deb ./liblog4cxx11_0.11.0-2_arm64.deb ./liblog4cxx-dev_0.11.0-2_arm64.deb
