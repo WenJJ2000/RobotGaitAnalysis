@@ -1,3 +1,5 @@
+import adafruit_servokit
+
 
 class ServoKit(object):
     default_angle = 90
@@ -17,7 +19,7 @@ class ServoKit(object):
             self.kit.servo[port].angle = 180
         else:
             self.kit.servo[port].angle = angle
-    
+
     def getAngle(self, port):
         return self.kit.servo[port].angle
 
@@ -27,18 +29,15 @@ class ServoKit(object):
     def resetAll(self):
         for i in range(self.num_ports):
             self.kit.servo[i].angle = self.default_angle
-            
-    
-    
+
     def rotate_clockwise():
         self.setAngle(1, self.getAngle(1) - self.motor_step)
-        
-    def rotate_anticlockwise():
-        self.setAngle(1,self.getAngle(1) + self.motor_step)
-        
-        
-	def tilt_up():
-		self.setAngle(0, self.getAngle(0) + self.motor_step)
 
-	def tilt_up():
-		self.setAngle(0, self.getAngle(0) - self.motor_step)
+    def rotate_anticlockwise():
+        self.setAngle(1, self.getAngle(1) + self.motor_step)
+
+    def tilt_up():
+        self.setAngle(0, self.getAngle(0) + self.motor_step)
+
+    def tilt_up():
+        self.setAngle(0, self.getAngle(0) - self.motor_step)

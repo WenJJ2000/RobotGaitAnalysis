@@ -70,3 +70,13 @@ pose_landmark_idx_to_name = {
     31: "left_foot_index",
     32: "right_foot_index",
 }
+
+
+def get_landmark_index(landmark_name):
+    """Get the index of a landmark by its name."""
+    return pose_landmark_name_to_idx.get(landmark_name, None)
+
+
+def get_landmark_name(landmark_index):
+    """Get the name of a landmark by its index."""
+    return pose_landmark_idx_to_name.get(landmark_index, None)
