@@ -1,3 +1,4 @@
 {
-  "editor.detectIndentation": false
+  "editor.detectIndentation": false,
+  "python.defaultInterpreterPath": "/home/jj/RobotGaitAnalysis/env/bin/python3"
 }
