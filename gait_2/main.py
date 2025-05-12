@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import butter, sosfilt, sosfilt_zi, find_peaks
 from scipy.interpolate import interp1d
+from picamera2 import Picamera2
+
+# ---------- Global Variables -----------
+BASE_DATA_PATH = "/home/jj/RobotGaitAnalysis/gait_2/gait_data"
 
 
 # ---------- Utility Functions ----------
@@ -94,16 +98,20 @@ window_closed = False
 
 
 # ---------- Main Runner ----------
+picam2 = Picamera2()
+picam2.preview_configuration.main.size = (640, 480)
+picam2.preview_configuration.main.format = "RGB888"
+picam2.configure("preview")
+picam2.start()
 
-cap = cv2.VideoCapture(0)
 filter_instance = TrueRealTimeFilter()
 angle_history = []
 landmark_history = []
 cv2.startWindowThread()
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+while True:
+    frame = picam2.capture_array()
+    # if not ret:
+    #     break
 
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = pose.process(frame_rgb)
@@ -193,12 +201,12 @@ data = {
 
 print("saving data to file")
 df = pd.DataFrame(data)
-df.to_csv("./gait_data/gait_filtered_data.csv", index=False)
+df.to_csv(f"{BASE_DATA_PATH}/gait_filtered_data.csv", index=False)
 
 
-cap.release()
+
 cv2.destroyAllWindows()
 pose.close()  # <<< Important!
 plt.ioff()
-fig.savefig("./gait_data/gait_plot.png")
+fig.savefig(f"{BASE_DATA_PATH}/gait_plot.png")
 plt.close("all")

@@ -7,10 +7,13 @@ import pandas as pd
 import ast
 
 
+# ---------- Global Variables --------------
+BASE_DATA_DIR = "/home/jj/RobotGaitAnalysis/gait_2/gait_data"
+
 # ---------- Gait Event Detection ----------
 def detect_heel_strikes(heel_values):
     heel_y = [point[2] for point in heel_values]
-    peaks, _ = find_peaks(-np.array(heel_y), distance=19)
+    peaks, _ = find_peaks(-np.array(heel_y), distance=10)
     return peaks
 
 
@@ -45,7 +48,7 @@ def plot_superimposed_cycles(cycles_dict):
 # ----------- Main Calculation -----------
 
 # Read data
-df = pd.read_csv("./gait_data/gait_filtered_data.csv")
+df = pd.read_csv(f"{BASE_DATA_DIR}/gait_filtered_data.csv")
 
 left_heel_values = list(
     map(lambda x: ast.literal_eval(x), df["Left Heel Values"].tolist())
