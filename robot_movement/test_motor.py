@@ -4,7 +4,7 @@ import sys
 from time import sleep
 
 # ---------- Global Variables ----------
-STEP = 1
+STEP = 0.01
 
 # ---------- Motor Setup ----------
 
@@ -14,8 +14,8 @@ motor1B = 27 # in2 GPIO27
 motor2A = 24 # in1 GPIO24
 motor2B = 23 # in2 GPIO23
 
-motor3A = 18 # in1 GPIO18
-motor3B = 22 # in2 GPIO22
+motor3A = 22 # in1 GPIO18
+motor3B = 18 # in2 GPIO22
 
 motor4A = 19 # in2 GPIO19
 motor4B = 26 # in2 GPIO26
@@ -35,9 +35,9 @@ def front_backward():
     motor1.backward()
     motor2.backward()
     
-def front_stop():
-    motor1.stop()
-    motor2.stop()
+# def front_stop():
+#     motor1.stop()
+#     motor2.stop()
     
 def back_forward():
     motor3.forward()
@@ -47,27 +47,54 @@ def back_backward():
     motor3.backward()
     motor4.backward()
 
-def back_stop():
-    motor3.stop()
-    motor4.stop()
+# def back_stop():
+#     motor3.stop()
+#     motor4.stop()
+    
+def left_forward():
+    motor1.forward()
+    motor3.forward()
+    
+def left_backward():
+    motor1.backward()
+    motor3.backward()
+
+def right_forward():
+    motor2.forward()
+    motor4.forward()
+    
+def right_backward():
+    motor2.backward()
+    motor4.backward()
     
 def car_forward():
     front_forward()
     back_forward()
+    sleep(0.3)
+    car_stop()
 
 def car_backward():
     front_backward()
     back_backward()
+    sleep(0.3)
+    car_stop()
+    
+def car_left():
+    right_forward()
+    left_backward()
+    
+def car_right():
+    right_backward()
+    left_forward()
     
 def car_stop():
     motor1.stop()
     motor2.stop()
     motor3.stop()
     motor4.stop()
-    
+
     
 def main(stdscr):
-        
     screen = curses.initscr()
     curses.noecho()
     curses.cbreak()
@@ -89,8 +116,10 @@ def main(stdscr):
                 car_backward()
             elif char == curses.KEY_RIGHT:
                 print("right")
+                car_right()
             elif char == curses.KEY_LEFT:
                 print("left")
+                car_left()
             elif char == 10:
                 print("stop")
                 

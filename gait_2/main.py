@@ -204,7 +204,7 @@ df = pd.DataFrame(data)
 df.to_csv(f"{BASE_DATA_PATH}/gait_filtered_data.csv", index=False)
 
 
-
+picam2.close()
 cv2.destroyAllWindows()
 pose.close()  # <<< Important!
 plt.ioff()
