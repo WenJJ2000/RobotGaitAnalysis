@@ -3,6 +3,7 @@ from picamera2 import Picamera2
 import cv2
 import mediapipe as mp
 
+
 # ----------Global Vairable----------
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(
@@ -28,63 +29,65 @@ def within_thresh(pt): # inside=1 leftside=0 rightside=2
 
 # ---------- Initialise Camera ----------
 
-with Picamera2() as picam2:
-    picam2.preview_configuration.main.size = (640, 480)
-    picam2.preview_configuration.main.format = "RGB888"
-    picam2.configure("preview")
-    picam2.start()
-    
-    while True:
-        frame = picam2.capture_array()
-        results = pose.process(frame)
+def main():
+    with Picamera2() as picam2:
+        picam2.preview_configuration.main.size = (640, 480)
+        picam2.preview_configuration.main.format = "RGB888"
+        picam2.configure("preview")
+        picam2.start()
         
-        if results.pose_world_landmarks:
-            left_hip = results.pose_landmarks.landmark[hip_id]
-            right_hip = results.pose_landmarks.landmark[hip_id+1]
-            # hip_loc = landmarks
+        while True:
+            frame = picam2.capture_array()
+            results = pose.process(frame)
             
-            print(left_hip,right_hip)
-            
-            if left_hip.visibility > 0.7 and right_hip.visibility > 0.7:
-                match within_thresh(left_hip.x):
-                    case 0:
-                        car_backward()
-                    case 1 :
-                        car_stop()
-                    case 2:     
-                        car_forward()
-            else :
-                car_stop()
-                        
-                # match within_thresh(right_hip.x):
-                #     case 1:
-                #         car_stop()
-                #     case 0:      
-                #         car_backward()
-                #     case 2:     
-                #         car_forward()
+            if results.pose_world_landmarks:
+                left_hip = results.pose_landmarks.landmark[hip_id]
+                right_hip = results.pose_landmarks.landmark[hip_id+1]
+                # hip_loc = landmarks
                 
+                print(left_hip,right_hip)
+                
+                if left_hip.visibility > 0.7 and right_hip.visibility > 0.7:
+                    match within_thresh(left_hip.x):
+                        case 0:
+                            car_backward()
+                        case 1 :
+                            car_stop()
+                        case 2:     
+                            car_forward()
+                else :
+                    car_stop()
+                            
+                    # match within_thresh(right_hip.x):
+                    #     case 1:
+                    #         car_stop()
+                    #     case 0:      
+                    #         car_backward()
+                    #     case 2:     
+                    #         car_forward()
+                    
+                        
                     
                 
+            mp_drawing.draw_landmarks(
+                frame,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                landmark_drawing_spec=mp_drawing.DrawingSpec(
+                    color=(0, 255, 0), thickness=2, circle_radius=2
+                ),
+                connection_drawing_spec=mp_drawing.DrawingSpec(
+                    color=(255, 0, 0), thickness=2, circle_radius=2
+                ),
+            )
+            cv2.imshow("Camera", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
             
-        mp_drawing.draw_landmarks(
-            frame,
-            results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing.DrawingSpec(
-                color=(0, 255, 0), thickness=2, circle_radius=2
-            ),
-            connection_drawing_spec=mp_drawing.DrawingSpec(
-                color=(255, 0, 0), thickness=2, circle_radius=2
-            ),
-        )
-        cv2.imshow("Camera", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-        
     
                 
-cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
+
 
 
 

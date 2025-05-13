@@ -6,12 +6,20 @@ import pandas as pd
 from scipy.signal import butter, sosfilt, sosfilt_zi, find_peaks
 from scipy.interpolate import interp1d
 from picamera2 import Picamera2
+from robot_movement.test_motor import car_forward,car_backward,car_stop,car_left,car_right
+
 
 # ---------- Global Variables -----------
 BASE_DATA_PATH = "/home/jj/RobotGaitAnalysis/gait_2/gait_data"
-
+hip_id = 23
+x_thresh = [0.4,0.6]
 
 # ---------- Utility Functions ----------
+def within_thresh(pt): # inside=1 leftside=0 rightside=2
+    if x_thresh[0] < pt < x_thresh[1]: return 1
+    if pt < x_thresh[0]: return 0
+    if pt > x_thresh[1]: return 2
+
 class TrueRealTimeFilter:
     def __init__(self, cutoff=3, fs=30, order=2):
         self.sos = butter(order, cutoff / (0.5 * fs), btype="low", output="sos")
@@ -94,119 +102,139 @@ ax2.legend()
 
 frame_count = 0
 
-window_closed = False
 
 
 # ---------- Main Runner ----------
-picam2 = Picamera2()
-picam2.preview_configuration.main.size = (640, 480)
-picam2.preview_configuration.main.format = "RGB888"
-picam2.configure("preview")
-picam2.start()
 
-filter_instance = TrueRealTimeFilter()
-angle_history = []
-landmark_history = []
-cv2.startWindowThread()
-while True:
-    frame = picam2.capture_array()
-    # if not ret:
-    #     break
+def main_gait():
+    window_closed = False
+    picam2 = Picamera2()
+    picam2.preview_configuration.main.size = (640, 480)
+    picam2.preview_configuration.main.format = "RGB888"
+    picam2.configure("preview")
+    picam2.start()
 
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = pose.process(frame_rgb)
+    filter_instance = TrueRealTimeFilter()
+    angle_history = []
+    landmark_history = []
+    cv2.startWindowThread()
+    while True:
+        frame = picam2.capture_array()
+        # if not ret:
+        #     break
 
-    if results.pose_world_landmarks:
-        landmarks = results.pose_world_landmarks.landmark
-        filtered_landmarks = []
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(frame_rgb)
 
-        for idx, lm in enumerate(landmarks):
-            x = filter_instance.apply(idx, "x", lm.x)
-            y = filter_instance.apply(idx, "y", lm.y)
-            z = filter_instance.apply(idx, "z", lm.z)
-            filtered_landmarks.append((x, y, z))
-        landmark_history.append(filtered_landmarks)
+        if results.pose_world_landmarks:
+            left_hip = results.pose_landmarks.landmark[hip_id]
+            right_hip = results.pose_landmarks.landmark[hip_id+1]
+            # hip_loc = landmarks
+            
+            print(left_hip,right_hip)
+            
+            if left_hip.visibility > 0.7 and right_hip.visibility > 0.7:
+                match within_thresh(left_hip.x):
+                    case 0:
+                        car_backward()
+                    case 1 :
+                        car_stop()
+                    case 2:     
+                        car_forward()
+            else :
+                car_stop()
+                
+            landmarks = results.pose_world_landmarks.landmark
+            filtered_landmarks = []
 
-        for name, idx in landmark_ids.items():
-            plot_buffer[name].append(filtered_landmarks[idx][1])
+            for idx, lm in enumerate(landmarks):
+                x = filter_instance.apply(idx, "x", lm.x)
+                y = filter_instance.apply(idx, "y", lm.y)
+                z = filter_instance.apply(idx, "z", lm.z)
+                filtered_landmarks.append((x, y, z))
+            landmark_history.append(filtered_landmarks)
 
-        angles = calculate_joint_angles(filtered_landmarks)
-        for joint, val in angles.items():
-            joint_angle_buffer[joint].append(val)
+            for name, idx in landmark_ids.items():
+                plot_buffer[name].append(filtered_landmarks[idx][1])
 
-        for name, line in lines_y.items():
-            y_data = plot_buffer[name][-100:]  # last 100 frames
-            line.set_data(range(len(y_data)), y_data)
+            angles = calculate_joint_angles(filtered_landmarks)
+            for joint, val in angles.items():
+                joint_angle_buffer[joint].append(val)
 
-        ax1.relim()
-        ax1.autoscale_view()
+            for name, line in lines_y.items():
+                y_data = plot_buffer[name][-100:]  # last 100 frames
+                line.set_data(range(len(y_data)), y_data)
 
-        # Update angle plots
-        for joint, line in lines_angle.items():
-            a_data = joint_angle_buffer[joint][-100:]
-            line.set_data(range(len(a_data)), a_data)
+            ax1.relim()
+            ax1.autoscale_view()
 
-        ax2.relim()
-        ax2.autoscale_view()
+            # Update angle plots
+            for joint, line in lines_angle.items():
+                a_data = joint_angle_buffer[joint][-100:]
+                line.set_data(range(len(a_data)), a_data)
 
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+            ax2.relim()
+            ax2.autoscale_view()
 
-    mp_drawing.draw_landmarks(
-        frame,
-        results.pose_landmarks,
-        mp_pose.POSE_CONNECTIONS,
-        landmark_drawing_spec=mp_drawing.DrawingSpec(
-            color=(0, 255, 0), thickness=2, circle_radius=2
-        ),
-        connection_drawing_spec=mp_drawing.DrawingSpec(
-            color=(255, 0, 0), thickness=2, circle_radius=2
-        ),
-    )
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
-    cv2.imshow("Camera", frame)
+        mp_drawing.draw_landmarks(
+            frame,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=mp_drawing.DrawingSpec(
+                color=(0, 255, 0), thickness=2, circle_radius=2
+            ),
+            connection_drawing_spec=mp_drawing.DrawingSpec(
+                color=(255, 0, 0), thickness=2, circle_radius=2
+            ),
+        )
 
-    try:
-        if not plt.fignum_exists(fig.number):  # check if figure still exists
+        cv2.imshow("Camera", frame)
+
+        try:
+            if not plt.fignum_exists(fig.number):  # check if figure still exists
+                window_closed = True
+        except:
             window_closed = True
-    except:
-        window_closed = True
 
-    # plt.pause(0.001)
-    if window_closed or (cv2.waitKey(1) & 0xFF == ord("q")):
-        print("stopping cv2")
-        break
-    # finally:
-    #
+        # plt.pause(0.001)
+        if window_closed or (cv2.waitKey(1) & 0xFF == ord("q")):
+            print("stopping cv2")
+            break
+        # finally:
+        #
 
-# hip_vals = [a["hip"] for a in angle_history]
-# knee_vals = [a["knee"] for a in angle_history]
-# ankle_vals = [a["ankle"] for a in angle_history]
+    # hip_vals = [a["hip"] for a in angle_history]
+    # knee_vals = [a["knee"] for a in angle_history]
+    # ankle_vals = [a["ankle"] for a in angle_history]
 
-# strikes = detect_heel_strikes(landmark_history)
+    # strikes = detect_heel_strikes(landmark_history)
 
-# hip_cycles = [normalize_cycle(c) for c in segment_cycles(hip_vals, strikes)]
-# knee_cycles = [normalize_cycle(c) for c in segment_cycles(knee_vals, strikes)]
-# ankle_cycles = [normalize_cycle(c) for c in segment_cycles(ankle_vals, strikes)]
+    # hip_cycles = [normalize_cycle(c) for c in segment_cycles(hip_vals, strikes)]
+    # knee_cycles = [normalize_cycle(c) for c in segment_cycles(knee_vals, strikes)]
+    # ankle_cycles = [normalize_cycle(c) for c in segment_cycles(ankle_vals, strikes)]
 
-# # plot_superimposed_cycles(
-# #     {"hip": hip_cycles, "knee": knee_cycles, "ankle": ankle_cycles}
-# # )
-data = {
-    "Hip Filtered": [a for a in joint_angle_buffer["hip"][-100:]],
-    "Knee Filtered": [a for a in joint_angle_buffer["knee"][-100:]],
-    "Ankle Filtered": [a for a in joint_angle_buffer["ankle"][-100:]],
-    "Left Heel Values": [lm[30] for lm in landmark_history[-100:]],
-}
+    # # plot_superimposed_cycles(
+    # #     {"hip": hip_cycles, "knee": knee_cycles, "ankle": ankle_cycles}
+    # # )
+    data = {
+        "Hip Filtered": [a for a in joint_angle_buffer["hip"][-100:]],
+        "Knee Filtered": [a for a in joint_angle_buffer["knee"][-100:]],
+        "Ankle Filtered": [a for a in joint_angle_buffer["ankle"][-100:]],
+        "Left Heel Values": [lm[30] for lm in landmark_history[-100:]],
+    }
 
-print("saving data to file")
-df = pd.DataFrame(data)
-df.to_csv(f"{BASE_DATA_PATH}/gait_filtered_data.csv", index=False)
+    print("saving data to file")
+    df = pd.DataFrame(data)
+    df.to_csv(f"{BASE_DATA_PATH}/gait_filtered_data.csv", index=False)
 
 
-picam2.close()
-cv2.destroyAllWindows()
-pose.close()  # <<< Important!
-plt.ioff()
-fig.savefig(f"{BASE_DATA_PATH}/gait_plot.png")
-plt.close("all")
+    picam2.close()
+    cv2.destroyAllWindows()
+    pose.close()  # <<< Important!
+    plt.ioff()
+    fig.savefig(f"{BASE_DATA_PATH}/gait_plot.png")
+    plt.close("all")
+
